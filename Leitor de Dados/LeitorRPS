@@ -1,0 +1,71 @@
+%LEITOR DE DADOS PARA CURVAS DE REFLECTÂNCIA
+%Esse código plota curvas teóricas baseadas na formulação de Fresnel, lê arquivo de planilha e plota os dados da planilha junto das previsões teóricas. O código se faz útil para estruturas de três camadas.
+%Laboratório de Sensores e Instrumentação - DES/UFPE
+%03 de maio de 2020
+%Escrito por Gabriel de Freitas.
+
+%------------------
+%1. Leitura de planilha de dados experimentais
+%Lê dados de arquivo CSV com dados orientados em coluna.
+
+array = readtable('/home/gabriel/Documentos/Caracterização - Otto Chip Retangular (Espaçamento 1,0)/100-109/Celula 100.csv');
+V = table2array(array);         %Transforma o arquivo em uma matriz
+theta_exp = V(:, 1);            %Separa a primeira coluna em outro vetor
+R_exp = V(:, 2);                %Mesma coisa para segunda coluna
+
+%------------------
+%2. Definição dos parâmetros ópticos das camadas.
+%OBS: Os valores aqui definidos são obtidos em: refractiveindex.info
+
+%Meio 1. (Meio de entrada, nesse caso, prisma de BK7)
+n1 = 1.4990;
+kappa1 = 4.3756*(10^(-7));
+e1 = (n1^2 - kappa1^2) + (-2*n1*kappa1)*j;   %Constante dielétrica
+
+%Meio 2
+d2 = (10^(-6))*1.8;                   %Espessura da camada em mícrons
+n2 = 1.00027425;
+kappa2 = 0;
+e2 = (n2)^2;                          %Constante dielétrica
+
+%Meio 3
+n3 = 0.21516;
+kappa3 = 6.2835;
+e3 = (n3^2 - kappa3^2) + (-2*n3*kappa3)*j;   %Constante dielétrica
+
+%----------------
+%3. Equações de Fresnel
+
+syms theta ko
+syms lambda    %Comprimento de onda usado no experimento em nm
+lambda =(10^(-9))*975.1
+ko = 2*pi/lambda;
+offset = 1.45;
+
+% Definição dos vetores de onda de cada meio
+syms k1(theta) k2(theta) k3(theta)
+k1(theta) = ko*(e1 - e1*(sin((theta + offset)*pi/180)^2))^(1/2);
+k2(theta) = ko*(e2 - e1*(sin((theta + offset)*pi/180)^2))^(1/2);
+k3(theta) = ko*(e3 - e1*(sin((theta + offset)*pi/180)^2))^(1/2);
+
+% Definição dos coenficientes de reflexão
+syms r12(theta) r23(theta)
+r12(theta) = (e2*k1 - e1*k2)/(e2*k1 + e1*k2);
+r23(theta) = (e3*k2 - e2*k3)/(e3*k2 + e2*k3);
+
+% Definição da função reflectância
+syms R(theta)
+R(theta) = (abs(r12+r23*exp(-2*1i*d2*k2))/abs(1 + r12*r23*exp(-2*1i*d2*k2)))^2;
+
+%-----------------
+%4. Gráficos
+
+fplot(R, [40 44]);
+grid on;
+%title('Ponto 72: x = 1 mm ,y = 1 mm ');
+xlabel('Ângulo de Incidência(graus)');
+ylabel('Reflectância');
+ylim([0 1]);
+xlim([40 43])
+hold on;
+plot(theta_exp,R_exp,'ro');
