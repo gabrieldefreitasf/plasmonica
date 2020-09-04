@@ -1,0 +1,56 @@
+%Mapa de Cores para Identificação de Região Ativa em Dispositivos Plasmônicos
+%Esse código lê uma série de arquivos csv correspondentes às curvas de reflectância provenientes de experimentos RPS.
+%15/05/2020 - Escrito por Gabriel de Freitas
+%------------------
+%1. Leitura de planilha de dados experimentais
+% A rotina de leitura deve ser repetida para o número de curvas em análise
+
+array1 = readtable('/home/gabriel/Documentos/Caracterização - Otto Chip Retangular (Espaçamento 1,0)/60-69/Celula 60.csv');
+V1 = table2array(array1);         %Transforma o arquivo em uma matriz
+R_1 = V1(:, 2);                   %Separa a segunda coluna (valor de reflectância) da matriz em um vetor separado
+
+%------------------
+%2. Matriz de Reflectância Mínima
+%Aqui a matriz M tem 121 posições. Ela deve receber o valor de reflectância mínima das células 
+%que apresentam ressonância e o preenchimento deve ser condizente a posição x e y da célula medida.
+
+%Inicia-se uma matriz nula - obs:Célula 60 é a posição M(6,6).
+M = [0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0
+    0 0 0 0 0 0 0 0 0 0 0];
+M(6,6) = min(R_1);
+%M(6,6) = min(R_2);
+%M(6,6) = min(R_3);
+%M(6,6) = min(R_4);
+%M(6,6) = min(R_5);
+%Repetir a atribuição para cada curva lida, modificando a posição M(x,y);
+
+%--------------------
+%3. Mapa de Cores
+
+M = abs(M-1);
+
+x = linspace(-5,5,11);
+y = linspace(-5,5,11);
+
+[xq, yq] = meshgrid(min(x):0.5:max(x),min(y):0.5:max(y));
+[X,Y,Z] = griddata(x,y,flip(M,1),xq,yq,'cubic');
+
+figure(1);
+colormap(jet);
+h1 = pcolor(X,Y,Z);
+%set(h1,'EdgeColor', 'none');
+c = colorbar;
+c.Label.String = 'Reflectância Mínima';
+c.Label.FontSize = 16;
+xlabel('x (mm)','FontSize',16);
+ylabel('y (mm)','FontSize',16);
+view(2);
